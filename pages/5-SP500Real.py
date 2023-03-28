@@ -6,7 +6,7 @@ import seaborn as sns
 from PIL import Image
 
 # Carga el DataFrame SP500Real
-SP500Real = pd.read_csv('./data/SP500Real.csv') 
+SP500Real = pd.read_csv('./pdata/SP500Real.csv') 
 
 
 if st.sidebar.checkbox('Gráfico S&P 500 Real',value=True):
