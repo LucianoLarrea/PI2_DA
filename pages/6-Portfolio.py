@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as  np
 from ta.momentum import RSIIndicator
 from ta.trend import EMAIndicator
 from ta.volatility import BollingerBands
@@ -43,14 +44,16 @@ col1, col2 = st.columns(2)
 with col1:
 
     # Crear campos de entrada para que el usuario especifique la proporción de cada activo
-    capital = st.number_input('Invested capital',min_value=1000, max_value=1000000, value=1000, step=10)
-    cap_stocks = st.slider("Stock capital (Max 50%)", 0.0, capital/2, 200.0)
+    capital = st.number_input('Invested capital',min_value=1000, max_value=1000000, value=1000, step=100)
+    cap_stocks = st.number_input("Stock capital (Max 50%)", min_value=0.0, max_value=capital/2, value=capital/5,step=100.0)
+    # cap_stocks = st.slider("Stock capital (Max 50%)", 0.0, capital/2, 200.0)
     remaining = capital - cap_stocks
 
-    cap_sp500 = st.slider("S&P 500 capital", 0.0, capital/2, remaining/2)
+    cap_sp500 = st.number_input("S&P 500 capital", min_value = 0.0, max_value = capital/2, value = remaining/2,step=100.0)
+    # cap_sp500 = st.slider("S&P 500 capital", 0.0, capital/2, remaining/2)
     remaining2 = remaining - cap_sp500
-    cap_bonds = st.slider("Bond capital", 0.0, remaining2, remaining2)
-
+    cap_bonds = st.number_input("Bond capital", min_value = 0.0, max_value = remaining2, value = remaining2,step=100.0)
+    # cap_bonds = st.slider("Bond capital", 0.0, remaining2, remaining2)
 
     # Descargar datos para cada activo seleccionado por el usuario
     if 'BONDS' in options:
@@ -106,27 +109,76 @@ with col1:
   
 
 with col2:
+    
     # Calcular el valor total del portafolio en cada fecha
     portfolio_data['Total'] = portfolio_data.sum(axis=1)
-
     # Crear una lista con las proporciones de cada activo en el portafolio
     proportions = [stocks_proportion, bonds_proportion, sp500_proportion]
-
     # Crear una lista con los nombres de los activos
     names = [symbol, "Bonds", "SP500"]
-
     # Crear un objeto Pie con los datos de las proporciones y nombres de activos
     pie = go.Pie(labels=names, values=proportions)
-
     # Crear un objeto Figure con el objeto Pie en el layout
     fig = go.Figure(pie)
-
     # Mostrar el gráfico en Streamlit con la función st.plotly_chart
     st.plotly_chart(fig)
 
-# Mostrar los datos del portafolio en una tabla
-st.dataframe(portfolio_data)
+performance,data = st.tabs(['KPIS','Historical Data'])
 
+with performance:
+    st.write('Portfolio KPIs')
+    return_data = pd.DataFrame()
+    if 'BONDS' in options:
+        return_bond = bonds_data['Close'].tail(1)
+        return_data['BONDS'] = return_bond
+    if 'SP500' in options:
+        return_sp500 = sp500_data['Close'].tail(1)
+        return_data['SP500'] = return_sp500
+    if symbol in options:
+        return_stock = stock_data['Close'].tail(1)
+        return_data[symbol] = return_stock
+    return_data['Total'] = return_bond + return_sp500 + return_stock
+    st.write(return_data)
+    
+
+    # calcular los retornos diarios
+    retornos_diarios = portfolio_data.pct_change()
+
+    # calcular la rentabilidad anualizada
+    rentabilidad_anual = retornos_diarios.mean() * 252
+
+    # calcular la volatilidad anualizada
+    volatilidad_anual = retornos_diarios.std() * np.sqrt(252)
+
+    # calcular la matriz de correlación de los retornos diarios
+    correlacion = retornos_diarios.corr()
+
+    # calcular la matriz de covarianza de los retornos diarios
+    covarianza = retornos_diarios.cov()
+
+    # calcular la diversificación (coeficiente de Sharpe)
+    rf = 0.02 # tasa libre de riesgo
+    sharpe_ratio = (rentabilidad_anual - rf) / volatilidad_anual
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+    # imprimir los resultados
+        st.write("Annualized Return:", rentabilidad_anual)
+    with col2:
+        st.write("Annualized Volatility:", volatilidad_anual)
+    with col3:
+        st.write("Sharpe Coeficient:", sharpe_ratio)
+    
+    st.write("Daily Returns Correlation Matrix:", correlacion)
+    st.write("Covariance Matrix of Daily Returns:", covarianza)
+    
+
+
+with data:
+# Mostrar los datos del portafolio en una tabla
+    st.dataframe(portfolio_data)
+    if st.button('Show tail'):
+            st.write(portfolio_data.tail())
 
 
 

@@ -90,9 +90,9 @@ if st.sidebar.checkbox('Calculadora S&P 500'):
         st.write('Diferencia en Porcentaje = ', round(Porcentaje,1),'%')
         st.write('Porcentaje Anual =',round(Porcentaje/DeltaTiempo,1),'%')
     
-if st.sidebar.checkbox('Tabla S&P 500'):
+if st.sidebar.checkbox('Table S&P 500'):
     # st.markdown('***')
-    st.subheader('Tabla S&P 500')
+    st.subheader('Table S&P 500')
     
     col1, col2, col3 = st.columns(3)
 
@@ -103,14 +103,14 @@ if st.sidebar.checkbox('Tabla S&P 500'):
         # if st.checkbox('Vista de datos (Head o Tail)'):
         #     if st.button('Mostrar head'):
         #         st.write(SP500.head())
-        if st.button('Mostrar tail'):
+        if st.button('Show tail'):
             st.write(SP500.tail())
 
     with col2:
-        st.subheader('Dimensiones')
+        st.subheader('Dimensions')
 
-        dim = st.radio('Dimensióm a mostrar:', ('Filas', 'Columnas'),horizontal=True)
+        dim = st.radio('Dimension to show:', ('Files', 'Columns'),horizontal=True)
         if dim == 'Filas':
-            st.write('Cantidad de filas:', SP500.shape[0])
+            st.write('Files amount:', SP500.shape[0])
         else:
-            st.write('Cantidad de columnas:', SP500.shape[1])
+            st.write('Columns amount:', SP500.shape[1])
