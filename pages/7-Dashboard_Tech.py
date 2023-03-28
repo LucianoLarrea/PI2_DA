@@ -11,11 +11,11 @@ import plotly.graph_objs as go
 # Establecer conexión con Yahoo Finance
 yf.pdr_override()
 
-df = pd.read_parquet('pdata/companies.parquet')
-symbol = st.sidebar.selectbox('Selecciona una acción:', df['Symbol'].unique())
+df0 = pd.read_parquet('pdata/companies.parquet')
+symbol = st.sidebar.selectbox('Selecciona una acción:', df0['Symbol'].unique())
 
 # Descargar datos 
-df = yf.download(symbol, start="2023-01-01", end="2023-03-28")
+df = yf.download(symbol, start="2022-09-28", end="2023-03-28")
 
 
 
@@ -63,14 +63,14 @@ st.write('El precio actual está dentro de las bandas de Bollinger:', within_bba
 
 
 # Filtrar datos para el último trimestre
-df_last_q = df.loc[df.index > (datetime.now() - timedelta(days=90))]
+df_last_q = df.loc[df.index > (datetime.now() - timedelta(days=180))]
 
 # Calcular bandas de Bollinger para el último trimestre
-bbands_last_month = BollingerBands(df_last_q['Close'], window=20, window_dev=2)
+bbands_last_month = BollingerBands(df_last_q['Close'], window=30, window_dev=2)
 df_last_q['BBands_20_2_high'] = bbands_last_month.bollinger_hband()
 df_last_q['BBands_20_2_low'] = bbands_last_month.bollinger_lband()
 
-# Calcular EMA de 30 días
+# Calcular EMA de 90 días
 ema_30 = EMAIndicator(df_last_q['Close'], window=30, fillna=True)
 df_last_q['EMA_30'] = ema_30.ema_indicator()
 
