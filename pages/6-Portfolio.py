@@ -19,7 +19,7 @@ symbol = st.sidebar.selectbox('Selecciona una acción:', df0['Symbol'].unique())
 today = datetime.date.today()
 
 # Definir la fecha de inicio predeterminada
-start_date_default = datetime.date(2013, 1, 1)
+start_date_default = datetime.date(2013, 3, 1)
 
 # Crear una entrada de fecha para que el usuario seleccione la fecha de inicio
 start_date = st.sidebar.date_input('Start Date', start_date_default)
@@ -30,7 +30,7 @@ if start_date is None or start_date > today:
 
 
 # start_date = st.sidebar.date_input('Start Date',datetime.date(2010, 1, 1))
-end_date = st.sidebar.date_input('End Date',datetime.date(2023, 1, 1)) 
+end_date = st.sidebar.date_input('End Date',datetime.date(2023, 3, 1)) 
 
 # Descargar datos 
 df = yf.download(symbol, start=start_date, end=end_date)
@@ -45,7 +45,7 @@ with col1:
 
     # Crear campos de entrada para que el usuario especifique la proporción de cada activo
     capital = st.number_input('Invested capital',min_value=1000, max_value=1000000, value=1000, step=100)
-    cap_stocks = st.number_input("Stock capital (Max 50%)", min_value=0.0, max_value=capital/2, value=capital/5,step=100.0)
+    cap_stocks = st.number_input("Stock capital (Max 50%)", min_value=0.0, max_value=capital/2, value=0.0,step=100.0)
     # cap_stocks = st.slider("Stock capital (Max 50%)", 0.0, capital/2, 200.0)
     remaining = capital - cap_stocks
 
@@ -153,8 +153,6 @@ with performance:
     # calcular la matriz de correlación de los retornos diarios
     correlacion = retornos_diarios.corr()
 
-    # calcular la matriz de covarianza de los retornos diarios
-    covarianza = retornos_diarios.cov()
 
     # calcular la diversificación (coeficiente de Sharpe)
     rf = 0.02 # tasa libre de riesgo
@@ -170,7 +168,7 @@ with performance:
         st.write("Sharpe Coeficient:", sharpe_ratio)
     
     st.write("Daily Returns Correlation Matrix:", correlacion)
-    st.write("Covariance Matrix of Daily Returns:", covarianza)
+  
     
 
 
