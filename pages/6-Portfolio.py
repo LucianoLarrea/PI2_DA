@@ -127,25 +127,27 @@ performance,data = st.tabs(['KPIS','Historical Data'])
 
 with performance:
     st.write('Portfolio KPIs')
-    return_data = pd.DataFrame()
-    if 'BONDS' in options:
-        return_bond = bonds_data['Close'].tail(1)
-        return_data['BONDS'] = return_bond
-    if 'SP500' in options:
-        return_sp500 = sp500_data['Close'].tail(1)
-        return_data['SP500'] = return_sp500
-    if symbol in options:
-        return_stock = stock_data['Close'].tail(1)
-        return_data[symbol] = return_stock
-    return_data['Total'] = return_bond + return_sp500 + return_stock
-    st.write(return_data)
-    
+    # return_data = pd.DataFrame()
+    # if 'BONDS' in options:
+    #     return_bond = bonds_data['Close'].tail(1)
+    #     return_data['BONDS'] = return_bond
+    # if 'SP500' in options:
+    #     return_sp500 = sp500_data['Close'].tail(1)
+    #     return_data['SP500'] = return_sp500
+    # if symbol in options:
+    #     return_stock = stock_data['Close'].tail(1)
+    #     return_data[symbol] = return_stock
+    # return_data['Total'] = return_bond + return_sp500 + return_stock
+    # st.write(return_data)
+    st.write(portfolio_data.tail(1))
 
     # calcular los retornos diarios
     retornos_diarios = portfolio_data.pct_change()
 
-    # calcular la rentabilidad anualizada
-    rentabilidad_anual = retornos_diarios.mean() * 252
+    # calcular la rentabilidad anualizada promediando los retornos diarios
+    rentabilidad_anual = retornos_diarios.mean() * 260
+    T = portfolio_data['Total']
+    rentabilidad_total = 100*(T.tail(1)-T[0])/T[0]
 
     # calcular la volatilidad anualizada
     volatilidad_anual = retornos_diarios.std() * np.sqrt(252)
@@ -162,6 +164,8 @@ with performance:
     with col1:
     # imprimir los resultados
         st.write("Annualized Return:", rentabilidad_anual)
+        st.write('Total Return:',rentabilidad_total)
+        # st.metric("Annual Return:", round(rentabilidad_anual,1),'%')
     with col2:
         st.write("Annualized Volatility:", volatilidad_anual)
     with col3:
