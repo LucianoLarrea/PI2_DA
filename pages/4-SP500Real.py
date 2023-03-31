@@ -2,16 +2,16 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.graph_objects as go
 from PIL import Image
 
 # Carga el DataFrame SP500Real
 SP500Real = pd.read_csv('./pdata/SP500Real.csv') 
 
 
-if st.sidebar.checkbox('Gráfico S&P 500 Real',value=True):
+if st.sidebar.checkbox('Graphic S&P 500 Real',value=True):
     # Agregar widget de radio button para seleccionar la escala del eje y
-    escala = st.radio('Seleccionar escala del eje y:', ['Linear', 'Log'])
+    escala = st.radio('Select scale for axis y:', ['Linear', 'Log'])
     # if st.checkbox('Escala Logaritmica'):
     #     escala = 'log'
     # else: escala = 'linear'
@@ -35,6 +35,8 @@ if st.sidebar.checkbox('Gráfico S&P 500 Real',value=True):
     plt.axvspan(1985, 2021, color='green', alpha=0.3)
     # # Configurar la escala logarítmica en el eje Y
     # ax.set_yscale(escala)
+    plt.axvline(x=2010, color='blue')
+    plt.axvline(x=2022, color='red')
     ax.axhline(y=1, color='black', linestyle='--')
 
     # Agregar una leyenda
@@ -45,10 +47,100 @@ if st.sidebar.checkbox('Gráfico S&P 500 Real',value=True):
     ax.set_ylabel('Index')
     ax.set_title('SP500 Real')
     st.pyplot(fig)
+    if st.checkbox('Interactive S&P 500 Real'):
+        # Verificar la opción seleccionada por el usuario y ajustar la escala del eje y
+        if escala == 'Log':
+            yaxis_type = 'log'
+        else:
+            yaxis_type = 'linear'
 
-if st.sidebar.checkbox('Calculadora S&P 500 Real'):
+        # Create traces
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(x=SP500Real['Year'], y=SP500Real['SP500'],
+                            mode='lines',
+                            name='SP500 Index',
+                            line=dict(color='green')))
+
+        fig.add_trace(go.Scatter(x=SP500Real['Year'], y=SP500Real['CPI'],
+                            mode='lines',
+                            name='CPI',
+                            line=dict(color='red')))
+
+        fig.add_trace(go.Scatter(x=SP500Real['Year'], y=SP500Real['SP500/CPI'],
+                            mode='lines',
+                            name='SP500/CPI',
+                            line=dict(color='blue')))
+
+        # Add vertical shaded regions for different time periods
+        fig.add_shape(type="rect",
+            xref="x", yref="paper",
+            x0=2000, y0=0, x1=2003, y1=1,
+            fillcolor="red",
+            opacity=0.3,
+            layer="below"
+        )
+
+        fig.add_shape(type="rect",
+            xref="x", yref="paper",
+            x0=2003, y0=0, x1=2007, y1=1,
+            fillcolor="green",
+            opacity=0.3,
+            layer="below"
+        )
+
+        fig.add_shape(type="rect",
+            xref="x", yref="paper",
+            x0=2007, y0=0, x1=2009, y1=1,
+            fillcolor="red",
+            opacity=0.3,
+            layer="below"
+        )
+
+        fig.add_shape(type="rect",
+            xref="x", yref="paper",
+            x0=2009, y0=0, x1=2021, y1=1,
+            fillcolor="green",
+            opacity=0.3,
+            layer="below"
+        )
+
+        fig.add_shape(type="rect",
+            xref="x", yref="paper",
+            x0=2021, y0=0, x1=2023, y1=1,
+            fillcolor="red",
+            opacity=0.3,
+            layer="below"
+        )
+
+        # Set layout
+        fig.update_layout(
+            title="SP500 Real",
+            xaxis_title="Year",
+            yaxis_title="Index",
+            yaxis_type=yaxis_type,
+            shapes=[
+                dict(
+                    type='line',
+                    yref='paper', y0=1, y1=1,
+                    xref='x', x0=1947, x1=2023,
+                    line=dict(
+                        color='black',
+                        dash='dash',
+                    )
+                )
+            ],
+        )
+        rango_tiempo = st.slider('Definir el rango de tiempo',min_value=1960,max_value=2023,step=1,value=2000)
+        # Set range of x axis based on user's input
+        fig.update_xaxes(range=[rango_tiempo, 2023])
+
+        # Display figure
+        st.plotly_chart(fig)
+
+if st.sidebar.checkbox('Calculator S&P 500 Real'):
     # st.markdown('***')
-    st.subheader('Calculadora S&P 500 Real')
+    st.subheader('Calculator S&P 500 Real')
 
     
     # Crear el array X de fechas
@@ -61,9 +153,9 @@ if st.sidebar.checkbox('Calculadora S&P 500 Real'):
 
     with col1:
   
-        Start_date = st.number_input("Año inicio 👇",min_value=1960, max_value=2021, value=2010, step=1)
-        End_date = st.number_input("Año fin 👇",min_value=1960, max_value=2021, value=2020, step=1)
-        Valor_inicial = st.number_input("USD Inicial 👇",min_value=1, max_value=10000, value=100, step=1)
+        Start_date = st.number_input("Start year 👇",min_value=1960, max_value=2021, value=2010, step=1)
+        End_date = st.number_input("End year 👇",min_value=1960, max_value=2021, value=2020, step=1)
+        Valor_inicial = st.number_input("Start Amount USD 👇",min_value=1, max_value=10000, value=100, step=1)
         
         # Encontrar el índice correspondiente a start_date y final_date en el array X
         index_inicial = np.where(X == Start_date)[0][0]
@@ -77,8 +169,8 @@ if st.sidebar.checkbox('Calculadora S&P 500 Real'):
         Valor_inicial = np.array(Valor_inicial)
         Valor_final = Valor_inicial * SP500_final / SP500_inicial
 
-        st.write('USD en el año',Start_date)
-        st.write(round(Valor_final,1),'USD en el año',End_date)
+        st.write('USD at year',Start_date)
+        st.write(round(Valor_final,1),'USD at year',End_date)
     
     with col2:
         image = Image.open('SP500Real.png')
@@ -86,14 +178,14 @@ if st.sidebar.checkbox('Calculadora S&P 500 Real'):
         DeltaTiempo = End_date-Start_date
         Diferencia = Valor_final-Valor_inicial
         Porcentaje = 100*Diferencia/Valor_inicial
-        st.write('Diferencia en Años =',round(DeltaTiempo,1))
-        st.write('Diferencia en USD =',round(Diferencia,1))
-        st.write('Diferencia en Porcentaje = ', round(Porcentaje,1),'%')
-        st.write('Porcentaje Anual =',round(Porcentaje/DeltaTiempo,1),'%')
+        st.write('Delta years =',round(DeltaTiempo,1))
+        st.write('Delta USD =',round(Diferencia,1))
+        st.write('Delta Percentaje = ', round(Porcentaje,1),'%')
+        st.write('Annual Percentaje=',round(Porcentaje/DeltaTiempo,1),'%')
     
-if st.sidebar.checkbox('Tabla S&P 500 Real'):
+if st.sidebar.checkbox('Table S&P 500 Real'):
     # st.markdown('***')
-    st.subheader('Tabla S&P 500 Real')
+    st.subheader('Table S&P 500 Real')
     
     col1, col2, col3 = st.columns(3)
 
@@ -108,10 +200,10 @@ if st.sidebar.checkbox('Tabla S&P 500 Real'):
             st.write(SP500Real.tail())
 
     with col2:
-        st.subheader('Dimensiones')
+        st.subheader('Dimensions')
 
-        dim = st.radio('Dimensióm a mostrar:', ('Filas', 'Columnas'),horizontal=True)
-        if dim == 'Filas':
-            st.write('Cantidad de filas:', SP500Real.shape[0])
+        dim = st.radio('Dimension to show:', ('Files', 'Columns'),horizontal=True)
+        if dim == 'Files':
+            st.write('Files amount:', SP500Real.shape[0])
         else:
-            st.write('Cantidad de columnas:', SP500Real.shape[1])
+            st.write('Columns amount:', SP500Real.shape[1])

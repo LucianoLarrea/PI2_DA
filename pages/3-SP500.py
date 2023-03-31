@@ -5,19 +5,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from PIL import Image
 
+
 # Carga el DataFrame SP500
 SP500 = pd.read_csv('./pdata/SP500.csv') 
 
 # st.title('S&P 500')
 
-if st.sidebar.checkbox('Gráfico S&P 500',value=True):
+if st.sidebar.checkbox('Graphic S&P 500',value=True):
     # st.markdown('***')
     # st.subheader('Gráfico S&P 500')
 
     # Agregar widget de radio button para seleccionar la escala del eje y
-    escala = st.radio('Seleccionar escala del eje y:', ['Linear', 'Log'])
+    escala = st.radio('Select scale for axis y:', ['Linear', 'Log'])
     
-    rango_tiempo = st.slider('Definir el rango de tiempo',min_value=1947,max_value=2023,step=1,value=2000)
+    rango_tiempo = st.slider('Define range time',min_value=1947,max_value=2023,step=1,value=2000)
     fig = plt.figure(figsize=(8,6))
     
     # Verificar la opción seleccionada por el usuario y ajustar la escala del eje y
@@ -40,15 +41,20 @@ if st.sidebar.checkbox('Gráfico S&P 500',value=True):
 
     # Graficar el rango de fechas en rojo
     plt.axvspan(2021, 2023, color='red', alpha=0.3)
+    plt.axvline(x=2010, color='blue')
+    plt.axvline(x=2022, color='red')
     plt.title('SP500')
     plt.xlabel('Year')
     plt.ylabel('Index')
     plt.legend()
     st.pyplot(fig)
+    # if st.checkbox('Interactive S&P 500'):
+    #     st.line_chart(SP500['Index'])
 
-if st.sidebar.checkbox('Calculadora S&P 500'):
+
+if st.sidebar.checkbox('Calculator S&P 500'):
     # st.markdown('***')
-    st.subheader('Calculadora S&P 500')
+    st.subheader('Calculator S&P 500')
 
     
     # Crear el array X de fechas
@@ -59,9 +65,9 @@ if st.sidebar.checkbox('Calculadora S&P 500'):
     # Valor_inicial = st.number_input("Monto inicial en USD 👇", key="viSP500", min_value=1, max_value=1000, value=100, step=1)
     col1, col2= st.columns(2)
     with col1:
-        Start_date = st.number_input("Año inicial 👇",min_value=1960, max_value=2022, value=2010, step=1)
-        End_date = st.number_input("Año final 👇",min_value=1960, max_value=2022, value=2020, step=1)
-        Valor_inicial = st.number_input("Inicial USD 👇",min_value=1, max_value=10000, value=100, step=1)
+        Start_date = st.number_input("Start year 👇",min_value=1960, max_value=2022, value=2010, step=1)
+        End_date = st.number_input("End year 👇",min_value=1960, max_value=2022, value=2020, step=1)
+        Valor_inicial = st.number_input("Start amount USD 👇",min_value=1, max_value=10000, value=100, step=1)
         
         # Encontrar el índice correspondiente a start_date y final_date en el array X
         index_inicial = np.where(X == Start_date)[0][0]
@@ -75,8 +81,8 @@ if st.sidebar.checkbox('Calculadora S&P 500'):
         Valor_inicial = np.array(Valor_inicial)
         Valor_final = Valor_inicial * SP500_final / SP500_inicial
 
-        st.write('USD en el año',Start_date)
-        st.write(round(Valor_final,1),'USD en el año',End_date)
+        st.write('USD at year',Start_date)
+        st.write(round(Valor_final,1),'USD at year',End_date)
         
     with col2:
         
@@ -85,10 +91,10 @@ if st.sidebar.checkbox('Calculadora S&P 500'):
         DeltaTiempo = End_date-Start_date
         Diferencia = Valor_final-Valor_inicial
         Porcentaje = 100*Diferencia/Valor_inicial
-        st.write('Diferencia en Años =',round(DeltaTiempo,1))
-        st.write('Diferencia en USD =',round(Diferencia,1))
-        st.write('Diferencia en Porcentaje = ', round(Porcentaje,1),'%')
-        st.write('Porcentaje Anual =',round(Porcentaje/DeltaTiempo,1),'%')
+        st.write('Delta years =',round(DeltaTiempo,1))
+        st.write('Delta USD =',round(Diferencia,1))
+        st.write('Delta Percentaje = ', round(Porcentaje,1),'%')
+        st.write('Annual Percentaje=',round(Porcentaje/DeltaTiempo,1),'%')
     
 if st.sidebar.checkbox('Table S&P 500'):
     # st.markdown('***')

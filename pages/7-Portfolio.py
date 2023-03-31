@@ -2,10 +2,6 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as  np
-from ta.momentum import RSIIndicator
-from ta.trend import EMAIndicator
-from ta.volatility import BollingerBands
-from yahoofinancials import YahooFinancials
 import datetime
 import plotly.graph_objs as go
 
@@ -13,7 +9,9 @@ import plotly.graph_objs as go
 yf.pdr_override()
 
 df0 = pd.read_parquet('pdata/companies.parquet')
-symbol = st.sidebar.selectbox('Selecciona una acción:', df0['Symbol'].unique())
+symbol = st.sidebar.selectbox('Selecciona una acción:', df0['Symbol'].unique(),index=25)
+
+CPI = pd.read_csv('pdata/CPI_D.csv')
 
 # Obtener la fecha actual
 today = datetime.date.today()
@@ -40,12 +38,13 @@ df = yf.download(symbol, start=start_date, end=end_date)
 options = df0['Symbol'].unique().tolist()
 options.extend(['BONDS', 'SP500'])
 
+st.markdown('### :man-woman-girl-boy: Diversify your portfolio ')
 col1, col2 = st.columns(2)
 with col1:
 
     # Crear campos de entrada para que el usuario especifique la proporción de cada activo
-    capital = st.number_input('Invested capital',min_value=1000, max_value=1000000, value=1000, step=100)
-    cap_stocks = st.number_input("Stock capital (Max 50%)", min_value=0.0, max_value=capital/2, value=0.0,step=100.0)
+    capital = st.number_input('Invested capital',min_value=100, max_value=1000000, value=100, step=100)
+    cap_stocks = st.number_input("Stock capital (Max 50%)", min_value=0.0, max_value=capital/2, value=20.0,step=100.0)
     # cap_stocks = st.slider("Stock capital (Max 50%)", 0.0, capital/2, 200.0)
     remaining = capital - cap_stocks
 
@@ -85,6 +84,8 @@ with col1:
     stocks_proportion = cap_stocks / total_proportion
     bonds_proportion = cap_bonds / total_proportion
     sp500_proportion = cap_sp500 / total_proportion
+    # Crear una lista con las proporciones de cada activo en el portafolio
+    proportions = [stocks_proportion, bonds_proportion, sp500_proportion]
 
     # Combinar los datos de los activos en un único DataFrame
     portfolio_data = pd.DataFrame(index=stock_data.index)
@@ -102,55 +103,77 @@ with col1:
         portfolio_data['SP500'] = amount_USD_sp500
     #     portfolio_data['SP500'] = sp500_data['Close'] * sp500_proportion * capital
     if symbol in options:
-        price_stock = stock_data['Close'][0] 
+        price_stock = stock_data['Adj Close'][0] 
         amount_stocks = cap_stocks/price_stock
-        amount_USD_stocks = amount_stocks * stock_data['Close']
+        amount_USD_stocks = amount_stocks * stock_data['Adj Close']
         portfolio_data[symbol] = amount_USD_stocks
-  
+
+# Calcula la volatilidad total (antes de agregar la columna y la fila Total)
+covariance_matrix = portfolio_data.pct_change().cov()
+portfolio_volatility = np.sqrt(np.dot(np.dot(np.transpose(proportions), covariance_matrix), proportions))
+
+# Calcula la correlacion con el portfolio
+portfolio_data['portfolio_return'] = portfolio_data.dot(proportions)
+# Calcular el coeficiente de correlación de los retornos diarios
+corr_matrix = portfolio_data.corr()
+corr_portfolio = corr_matrix.loc['portfolio_return'].drop('portfolio_return')
+corr_portfolio = corr_portfolio.rename('Correlation with portfolio')
+corr_portfolio.index.rename('Name',inplace=True)
+portfolio_data.drop(columns='portfolio_return',inplace=True)
 
 with col2:
     
     # Calcular el valor total del portafolio en cada fecha
     portfolio_data['Total'] = portfolio_data.sum(axis=1)
-    # Crear una lista con las proporciones de cada activo en el portafolio
-    proportions = [stocks_proportion, bonds_proportion, sp500_proportion]
+ 
     # Crear una lista con los nombres de los activos
     names = [symbol, "Bonds", "SP500"]
     # Crear un objeto Pie con los datos de las proporciones y nombres de activos
-    pie = go.Pie(labels=names, values=proportions)
+    pie = go.Pie(labels=names, values=proportions, textposition='auto')
     # Crear un objeto Figure con el objeto Pie en el layout
-    fig = go.Figure(pie)
+    fig = go.Figure(pie, layout=dict(width=600, height=400))
     # Mostrar el gráfico en Streamlit con la función st.plotly_chart
     st.plotly_chart(fig)
 
-performance,data = st.tabs(['KPIS','Historical Data'])
+# Calculo de KPIs: Rentabilidad, Volatilidad y Diversificacion
+# Calcula la rentabilidad total
+T = portfolio_data['Total']
+rentabilidad_total = (T.tail(1)-T[0])/T[0]
+st.markdown("""---""")
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric('Total Return %:',round(100*rentabilidad_total,1),delta='Total %')
+with col2:    
+    st.metric('Total Volatility %',round(100*portfolio_volatility,2))
+with col3:
+    st.write('Correlation',corr_portfolio)
+
+
+
+performance,data = st.tabs(['Indicators','Historical Data'])
+
 
 with performance:
-    st.write('Portfolio KPIs')
-    # return_data = pd.DataFrame()
-    # if 'BONDS' in options:
-    #     return_bond = bonds_data['Close'].tail(1)
-    #     return_data['BONDS'] = return_bond
-    # if 'SP500' in options:
-    #     return_sp500 = sp500_data['Close'].tail(1)
-    #     return_data['SP500'] = return_sp500
-    # if symbol in options:
-    #     return_stock = stock_data['Close'].tail(1)
-    #     return_data[symbol] = return_stock
-    # return_data['Total'] = return_bond + return_sp500 + return_stock
-    # st.write(return_data)
+    st.write('Closing price on the last date')
+
     st.write(portfolio_data.tail(1))
 
-    # calcular los retornos diarios
+    # Calcula los retornos diarios
     retornos_diarios = portfolio_data.pct_change()
 
-    # calcular la rentabilidad anualizada promediando los retornos diarios
-    rentabilidad_anual = retornos_diarios.mean() * 260
-    T = portfolio_data['Total']
-    rentabilidad_total = 100*(T.tail(1)-T[0])/T[0]
+    # Calcula la rentabilidad anualizada promediando los retornos diarios
+    rentabilidad_anual = retornos_diarios.mean() * 252
+    rentabilidad_anual.name = '% return'
+    rentabilidad_anual.index.name = 'Name'
+    # rentabilidad_anual.set_axis(axis='index', inplace=True, name='Name')
 
-    # calcular la volatilidad anualizada
+    # Calcula la volatilidad anualizada
     volatilidad_anual = retornos_diarios.std() * np.sqrt(252)
+    volatilidad_anual.name = '%'
+    volatilidad_anual.index.name = 'Name'   
+
+    # Calcula la volatilidad total
+    # volatilidad_anual['Total']
 
     # calcular la matriz de correlación de los retornos diarios
     correlacion = retornos_diarios.corr()
@@ -159,22 +182,19 @@ with performance:
     # calcular la diversificación (coeficiente de Sharpe)
     rf = 0.02 # tasa libre de riesgo
     sharpe_ratio = (rentabilidad_anual - rf) / volatilidad_anual
-
+    sharpe_ratio.name = '%'
+    
     col1, col2, col3 = st.columns(3)
     with col1:
     # imprimir los resultados
-        st.write("Annualized Return:", rentabilidad_anual)
-        st.write('Total Return:',rentabilidad_total)
+        st.write("Annualized Return:", round(100*rentabilidad_anual,1))
         # st.metric("Annual Return:", round(rentabilidad_anual,1),'%')
     with col2:
-        st.write("Annualized Volatility:", volatilidad_anual)
+        st.write("Annualized Volatility:", round(100*volatilidad_anual,1))
     with col3:
-        st.write("Sharpe Coeficient:", sharpe_ratio)
+        st.write("Sharpe Coeficient:", round(100*sharpe_ratio,1))
     
     st.write("Daily Returns Correlation Matrix:", correlacion)
-  
-    
-
 
 with data:
 # Mostrar los datos del portafolio en una tabla

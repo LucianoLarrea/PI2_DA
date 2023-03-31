@@ -26,6 +26,7 @@ if query == 'Home':
         st.image(image, caption='Delorian')
         image = Image.open('Porsche.jpeg')
         st.image(image, caption='The race begins')
+        st.markdown('### :male-scientist: First, investigate and learn ')
 
  
         
@@ -58,15 +59,26 @@ if query == 'Inflation':
                 if choose == 'A year':
                         DIV = 1/1000000000
                 LVOT = GMS * GAI / DIV
-        st.write('Loss of value over time = USD',round(LVOT,1))
+        st.write('Loss of value over time =')
+        st.metric('USD',round(LVOT,1))
+        st.markdown("""---""")
         image = Image.open('Investor.jpeg')
         st.image(image, caption='Inflation glove')
+        st.markdown('# Investment is the best protection against inflation :umbrella_with_rain_drops:')
+
                 
 
 if query == 'End':
         st.header('My investment!:sunglasses:')
         image = Image.open('Fun.jpg')
         st.image(image, caption='Suzuki Fun')
+        st.markdown("""---""")
+        st.header('Conclusions')
+        st.markdown('### :umbrella_with_rain_drops: Investment is the best protection against inflation')
+        st.markdown('### :male-scientist: First, investigate and learn ')
+        st.markdown('### :man-woman-girl-boy: Diversify your portfolio ')
+        st.markdown('### :hourglass_flowing_sand: Investing in the stock market is a long-term strategy, be patient ')
+        
         st.markdown('''
         # Links
         - [The Growth and Composition of S&P 500](https://prod-useast-b.online.tableau.com/#/site/takticflow/views/SnP500/Dashboard1?:embed=n&:iid=1&:origin=card_share_link)
